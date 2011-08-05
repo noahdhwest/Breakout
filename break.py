@@ -300,7 +300,7 @@ class Game:
 def main():
   pygame.init()
 
-  screen = pygame.display.set_mode([480, 800])
+  screen = pygame.display.set_mode([480, 700])
 
   if android:
     android.init()
