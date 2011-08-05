@@ -8,55 +8,14 @@ try:
 except ImportError:
     android = None
 
-FPS = 30
+try:
+    import pygame.mixer as mixer
+except ImportError:
+    import android_mixer as mixer
+
+FPS = 15
 TIMEREVENT = pygame.USEREVENT
 
-skier_images = ["skier_left2.png",
-                "skier_left1.png",
-                "skier_down.png", 
-                "skier_right1.png",
-                "skier_right2.png",  
-                "skier_crash.png"]
-
-class SkierClass(pygame.sprite.Sprite):
-    def __init__(self, screen, img_path):
-        pygame.sprite.Sprite.__init__(self)
-        self.img_path = img_path
-        self.angle = 0
-        self.rect = None
-        self.set_image(2+self.angle)
-        self.rect.center = [screen.get_width()/2, 100]
-
-    def set_image(self, angle):
-      center = None
-      if self.rect: 
-        center = self.rect.center
-
-      self.image = pygame.image.load(os.path.join(self.img_path, skier_images[angle]))
-      self.rect = self.image.get_rect()
-      if center:
-        self.rect.center = center
-
-    def turn(self, direction):
-        self.angle = self.angle + direction
-        return self.set_angle(self.angle)
-
-    def set_angle(self, angle):
-      self.angle = angle
-      if self.angle < -2: self.angle = -2
-      if self.angle > 2: self.angle = 2
-      return self._calc_speed()
-
-    def _calc_speed(self):
-      self.set_image(2+self.angle)
-      speed = [self.angle, 6 - abs(self.angle) * 2]
-      return speed
-
-    def move(self, speed) :
-        self.rect.centerx = self.rect.centerx + speed[0]
-        if self.rect.centerx< 20: self.rect.centerx = 20
-        if self.rect.centerx > 620: self.rect.centerx = 620
-        
 class ObstacleClass(pygame.sprite.Sprite):
     def __init__(self, image_file, location, type):
         pygame.sprite.Sprite.__init__(self)
@@ -66,10 +25,24 @@ class ObstacleClass(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = location
         self.type = type
-        self.passed = False
 
-    def scroll(self, t_ptr):
-        self.rect.centery = self.location[1] - t_ptr
+class BallClass(ObstacleClass):
+  def __init__(self, image_file, location, type):
+    ObstacleClass.__init__(self, image_file, location, type)
+    self.vx = 5.0
+    self.vy = 5.0
+
+  def move(self, screen):
+    self.rect.x = self.rect.x + self.vx
+    self.rect.y = self.rect.y + self.vy
+
+    if self.rect.x < screen.border: 
+      self.rect.x = screen.border
+      self.vx = -self.vx
+    elif self.rect.x > screen.screen_width - screen.border: 
+      self.rect.x = screen.screen_width - screen.border
+      self.vx = -self.vx
+    
 
 class Game:
     def __init__(self, screen, img_path):
@@ -91,6 +64,9 @@ class Game:
 
         self.level = 0
         self.paddle = None
+        self.ball = None
+
+        self.splat = mixer.Sound("whistleup.wav")
 
         self.clearObstacleGroup()
 
@@ -109,6 +85,7 @@ class Game:
       self.clearObstacleGroup()
       self.addAllBricks(self.level)
       self.createPaddle()
+      self.createBall()
 
     def addAllBricks(self, level):
       y = 72
@@ -149,18 +126,27 @@ class Game:
       location = [self.screen_width/2, self.screen_height-50]
       self.paddle = ObstacleClass(os.path.join(self.img_path, "paddle.png"), 
                                   location, "paddle")
+      self.obstacles.add(self.paddle)
+
+
+    def createBall(self):
+      location = [self.screen_width/2, 300]
+      self.ball = BallClass(os.path.join(self.img_path, "ball.png"), 
+                            location, "ball")
 
             
     def animate(self, flip=True):
         self.screen.fill([0,0,0])
 
-        pygame.display.update(self.obstacles.draw(self.screen))
-
         if self.paddle:
           mouse_pos = pygame.mouse.get_pos()
           self.paddle.rect.x = mouse_pos[0]
-        
-          self.screen.blit(self.paddle.image, self.paddle.rect)
+
+        pygame.display.update(self.obstacles.draw(self.screen))
+
+        if self.ball:
+          self.ball.move(self)
+          self.screen.blit(self.ball.image, self.ball.rect)
 
         if self.score_text:
           self.screen.blit(self.score_text, [10, 10])
@@ -284,13 +270,33 @@ class Game:
             if android:
               a = android.accelerometer_reading()
               #self.debug_text = "%f" % a[0]
-              
+
+            ## did the ball hit a brick or paddle?
+            hit = pygame.sprite.spritecollide(self.ball, self.obstacles, False)
+            if hit:
+              if hit[0].type == "paddle":
+                self.ball.vy = -self.ball.vy
+              elif hit[0].type == "brick":
+                self.ball.vy = -self.ball.vy
+                self.points = self.points + 10
+                self.obstacles.remove(hit)
+                self.splat.play()
+
+            ## did the ball hit the top of the screen?
+            if self.ball.rect.y < self.border:
+              self.ball.vy = self.ball.vy * 1.5
+              self.ball.vy = -self.ball.vy
+
+            ## did the ball hit the bottom of the screen?
+            if self.ball.rect.y > self.screen_height:
+              return True
 
             self.score_text = self.font.render("Score: " + str(self.points), 1, (255,255,255))
             self.animate()
 
 def main():
   pygame.init()
+  mixer.init()
 
   screen = pygame.display.set_mode([480, 800])
 
