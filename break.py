@@ -11,12 +11,6 @@ except ImportError:
 FPS = 30
 TIMEREVENT = pygame.USEREVENT
 
-skier_images = ["skier_left2.png",
-                "skier_left1.png",
-                "skier_down.png", 
-                "skier_right1.png",
-                "skier_right2.png",  
-                "skier_crash.png"]
 
 class SkierClass(pygame.sprite.Sprite):
     def __init__(self, screen, img_path):
@@ -122,7 +116,7 @@ class Game:
       y = 72
 
       if level >= 2:
-        oblist = self.addBrickRow("blue.png", y)
+        oblist = self.addBrickRow("red.png", y)
         self.addObstacleGroup(oblist)
       y = y + (self.brick_height+self.border) * 2
 
@@ -131,7 +125,7 @@ class Game:
         self.addObstacleGroup(oblist)
       y = y + (self.brick_height+self.border) * 2
 
-      oblist = self.addBrickRow("red.png", y)
+      oblist = self.addBrickRow("blue.png", y)
       self.addObstacleGroup(oblist)
       y = y + (self.brick_height+self.border) * 2
 
