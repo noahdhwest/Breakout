@@ -307,7 +307,7 @@ def main():
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
     android.accelerometer_enable(True)
 
-  game = Game(screen, "noah")
+  game = Game(screen, "images")
 
   ret = game.startScreen()
 
