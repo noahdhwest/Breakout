@@ -86,26 +86,23 @@ class Game:
       self.addAllBricks(self.level)
       self.createPaddle()
       self.createBall()
-
+      
     def addAllBricks(self, level):
       y = 72
 
       if level >= 2:
-        oblist = self.addBrickRow("red.png", y)
+        oblist, y = self.addBrickRow("red.png", y, 4)
         self.addObstacleGroup(oblist)
-      y = y + (self.brick_height+self.border) * 2
 
       if level >= 1:
-        oblist = self.addBrickRow("green.png", y)
+        oblist, y = self.addBrickRow("green.png", y, 4)
         self.addObstacleGroup(oblist)
-
-      y = y + (self.brick_height+self.border) * 2
-
-      oblist = self.addBrickRow("blue.png", y)
+        
+      oblist, y = self.addBrickRow("blue.png", y, 4)
       self.addObstacleGroup(oblist)
-      y = y + (self.brick_height+self.border) * 2
+      
 
-    def addBrickRow(self, brickColor, y):
+    def addBrickRow(self, brickColor, y, rows):
       obstacles = pygame.sprite.Group()
 
       img = os.path.join(self.img_path, brickColor)
@@ -113,14 +110,14 @@ class Game:
       
       dx = (self.brick_width + self.brick_border)
       
-      for i in range(2):
+      for i in range(rows):
         for j in range(10):
           location = [self.border + j*dx + (self.brick_width/2), y]
           r = ObstacleClass(img, location, type)
           obstacles.add(r)
           
         y = y + self.brick_height + self.brick_border
-      return obstacles
+      return obstacles, y
 
     def createPaddle(self):
       location = [self.screen_width/2, self.screen_height-50]
@@ -298,7 +295,7 @@ def main():
   pygame.init()
   mixer.init()
 
-  screen = pygame.display.set_mode([480, 800])
+  screen = pygame.display.set_mode([480, 700])
 
   if android:
     android.init()
