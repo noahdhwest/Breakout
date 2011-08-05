@@ -98,8 +98,6 @@ class Game:
         self.setup()
         #self.skier = SkierClass(self.screen, self.img_path)
 
-        self.speed = [0, 6]
-        self.map_position = 0
         self.mp = 0
         self.points = 0
         self.activeMap = 0
@@ -115,7 +113,7 @@ class Game:
 
     def setup(self):
       self.addAllBricks(self.level)
-      #self.createPaddle()
+      self.createPaddle()
       self.count = 0
 
     def addAllBricks(self, level):
@@ -151,13 +149,21 @@ class Game:
           
         y = y + self.brick_height + self.brick_border
       return obstacles
-      
+
+    def createPaddle(self):
+      location = [self.screen_width/2, self.screen_height-50]
+      self.paddle = ObstacleClass(os.path.join(self.img_path, "paddle.png"), 
+                                  location, "paddle")
 
             
     def animate(self, flip=True):
         self.screen.fill([0,0,0])
         pygame.display.update(self.obstacles.draw(self.screen))
-        #self.screen.blit(self.skier.image, self.skier.rect)
+
+        mouse_pos = pygame.mouse.get_pos()
+        self.paddle.rect.x = mouse_pos[0]
+        
+        self.screen.blit(self.paddle.image, self.paddle.rect)
 
         if self.score_text:
           self.screen.blit(self.score_text, [10, 10])
