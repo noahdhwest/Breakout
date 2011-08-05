@@ -84,20 +84,14 @@ class Game:
         self.score_text = None
 
         self.level = 0
+        self.paddle = None
 
         self.clearObstacleGroup()
-        self.init()
 
     def init(self):
         self.setup()
-        #self.skier = SkierClass(self.screen, self.img_path)
 
-        self.mp = 0
         self.points = 0
-        self.activeMap = 0
-        self.density = 1
-
-        self.clearObstacleGroup()
 
     def clearObstacleGroup(self):
       self.obstacles = pygame.sprite.Group()
@@ -106,9 +100,9 @@ class Game:
       for ob in oblist: self.obstacles.add(ob)
 
     def setup(self):
+      self.clearObstacleGroup()
       self.addAllBricks(self.level)
       self.createPaddle()
-      self.count = 0
 
     def addAllBricks(self, level):
       y = 72
@@ -121,6 +115,7 @@ class Game:
       if level >= 1:
         oblist = self.addBrickRow("green.png", y)
         self.addObstacleGroup(oblist)
+
       y = y + (self.brick_height+self.border) * 2
 
       oblist = self.addBrickRow("blue.png", y)
@@ -152,12 +147,14 @@ class Game:
             
     def animate(self, flip=True):
         self.screen.fill([0,0,0])
+
         pygame.display.update(self.obstacles.draw(self.screen))
 
-        mouse_pos = pygame.mouse.get_pos()
-        self.paddle.rect.x = mouse_pos[0]
+        if self.paddle:
+          mouse_pos = pygame.mouse.get_pos()
+          self.paddle.rect.x = mouse_pos[0]
         
-        self.screen.blit(self.paddle.image, self.paddle.rect)
+          self.screen.blit(self.paddle.image, self.paddle.rect)
 
         if self.score_text:
           self.screen.blit(self.score_text, [10, 10])
@@ -217,7 +214,8 @@ class Game:
 
 
     def gameOver(self):
-        again_text = self.font.render("Press any key to play again", 1, (0,0,0))
+        again_text = self.font.render("Press any key to play again", 1, (255,255,255))
+        self.paddle = None
 
         while 1:
             if android:
@@ -234,7 +232,7 @@ class Game:
                   else:
                     return True
             
-            text = self.font.render("Game Over", 1, (0,0,0))
+            text = self.font.render("Game Over", 1, (255,255,255))
             rect = text.get_rect()
 
             self.animate(False)
@@ -281,19 +279,7 @@ class Game:
               a = android.accelerometer_reading()
               #self.debug_text = "%f" % a[0]
               
-              x = a[0]
-              if abs(x) < 1:
-                self.speed = self.skier.set_angle(0)
-              elif x > 3:
-                self.speed = self.skier.set_angle(-2)
-              elif x > 1:
-                self.speed = self.skier.set_angle(-1)
-              elif x < -3:
-                self.speed = self.skier.set_angle(2)
-              elif x < -1:
-                self.speed = self.skier.set_angle(1)
 
-            self.density = 1 + self.points/100
             self.score_text = self.font.render("Score: " + str(self.points), 1, (255,255,255))
             self.animate()
 
