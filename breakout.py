@@ -30,6 +30,8 @@ class BallClass(ObstacleClass):
   def __init__(self, image_file, location, type):
     ObstacleClass.__init__(self, image_file, location, type)
     self.vx = 5.0
+    if random.randint(0,1):
+        self.vx = -self.vx
     self.vy = 5.0
 
   def move(self, screen):
@@ -62,9 +64,10 @@ class Game:
         self.debug_text = ""
         self.score_text = None
 
+        self.count = 0
         self.level = 0
         self.paddle = None
-        self.ball = None
+        self.balls = []
 
         self.splat = mixer.Sound("whistleup.wav")
 
@@ -85,20 +88,21 @@ class Game:
       self.clearObstacleGroup()
       self.addAllBricks(self.level)
       self.createPaddle()
-      self.createBall()
       
     def addAllBricks(self, level):
+      self.count = 0
+        
       y = 72
 
       if level >= 2:
-        oblist, y = self.addBrickRow("red.png", y, 4)
+        oblist, y = self.addBrickRow("red.png", y, 2)
         self.addObstacleGroup(oblist)
 
       if level >= 1:
-        oblist, y = self.addBrickRow("green.png", y, 4)
+        oblist, y = self.addBrickRow("green.png", y, 2)
         self.addObstacleGroup(oblist)
         
-      oblist, y = self.addBrickRow("blue.png", y, 4)
+      oblist, y = self.addBrickRow("blue.png", y, 2)
       self.addObstacleGroup(oblist)
       
 
@@ -115,6 +119,7 @@ class Game:
           location = [self.border + j*dx + (self.brick_width/2), y]
           r = ObstacleClass(img, location, type)
           obstacles.add(r)
+          self.count = self.count + 1
           
         y = y + self.brick_height + self.brick_border
       return obstacles, y
@@ -128,10 +133,10 @@ class Game:
 
     def createBall(self):
       location = [self.screen_width/2, 300]
-      self.ball = BallClass(os.path.join(self.img_path, "ball.png"), 
+      ball = BallClass(os.path.join(self.img_path, "ball.png"), 
                             location, "ball")
-
-            
+      return ball
+    
     def animate(self, flip=True):
         self.screen.fill([0,0,0])
 
@@ -141,9 +146,9 @@ class Game:
 
         pygame.display.update(self.obstacles.draw(self.screen))
 
-        if self.ball:
-          self.ball.move(self)
-          self.screen.blit(self.ball.image, self.ball.rect)
+        for ball in self.balls:
+          ball.move(self)
+          self.screen.blit(ball.image, ball.rect)
 
         if self.score_text:
           self.screen.blit(self.score_text, [10, 10])
@@ -269,24 +274,31 @@ class Game:
               #self.debug_text = "%f" % a[0]
 
             ## did the ball hit a brick or paddle?
-            hit = pygame.sprite.spritecollide(self.ball, self.obstacles, False)
-            if hit:
-              if hit[0].type == "paddle":
-                self.ball.vy = -self.ball.vy
-              elif hit[0].type == "brick":
-                self.ball.vy = -self.ball.vy
-                self.points = self.points + 10
-                self.obstacles.remove(hit)
-                self.splat.play()
+            for ball in self.balls:
+                hit = pygame.sprite.spritecollide(ball, self.obstacles, False)
+                if hit:
+                  if hit[0].type == "paddle":
+                    ball.vy = -ball.vy
+                  elif hit[0].type == "brick":
+                    ball.vy = -ball.vy
+                    self.points = self.points + 10
+                    self.obstacles.remove(hit)
+                    self.splat.play()
+                    self.count = self.count - 1
+                    if self.count <= 0:
+                        ## level complete
+                        self.level = self.level + 1
+                        self.init()
 
-            ## did the ball hit the top of the screen?
-            if self.ball.rect.y < self.border:
-              self.ball.vy = self.ball.vy * 1.5
-              self.ball.vy = -self.ball.vy
+                ## did the ball hit the top of the screen?
+                if ball.rect.y < self.border:
+                  ball.vy = ball.vy * 1.5
+                  ball.vy = -ball.vy
 
-            ## did the ball hit the bottom of the screen?
-            if self.ball.rect.y > self.screen_height:
-              return True
+                ## did the ball hit the bottom of the screen?
+                if ball.rect.y > self.screen_height:
+                  self.balls = []
+                  return True
 
             self.score_text = self.font.render("Score: " + str(self.points), 1, (255,255,255))
             self.animate()
@@ -312,10 +324,13 @@ def main():
 
   while 1:
     game.init()
-    ret = game.play()
-    if ret == False:
-      pygame.quit()
-      sys.exit(1)
+    for life in range(3):
+        ball = game.createBall()
+        game.balls.append(ball)
+        ret = game.play()
+        if ret == False:
+          pygame.quit()
+          sys.exit(1)
 
     ret = game.gameOver()
     if ret == False:
