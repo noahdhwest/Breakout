@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import skier
+import breakout
 
 def main():
-  skier.main()
+  breakout.main()
 
 if __name__ == "__main__":
-  skier.main()
+  breakout.main()

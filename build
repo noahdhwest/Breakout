@@ -4,4 +4,4 @@ export TOP=`pwd`
 export NAME=`basename $TOP`
 
 cd ../pygame-package-0.9.3
-./build.py --dir $TOP --package com.pygame.$NAME --name $NAME --icon icon.png --presplash splash.jpg --version 1.0 --orientation portrait debug
+./build.py --dir $TOP --package com.pygame.$NAME --name $NAME --icon $TOP/icon.png --presplash $TOP/splash.jpg --version 1.0 --orientation portrait --with-PIL debug
