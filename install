@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+adb uninstall com.pygame.Breakout
+adb install ../pygame-package-0.9.3/bin/Breakout-1.0-debug.apk
+
